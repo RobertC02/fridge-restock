@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Restock">
@@ -33,6 +33,7 @@
   --short:#f2846f; --short-bg:#36201b; --ok:#66c58e; color-scheme:dark}
 
 *{box-sizing:border-box}
+html{touch-action:manipulation}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -125,7 +126,7 @@ main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
 input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;height:44px;padding:0 10px;min-width:0;width:100%}
 input[type=range]{border:0;background:none;padding:0;accent-color:var(--accent)}
-textarea{height:auto;min-height:88px;padding:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+textarea{height:auto;min-height:88px;padding:10px;font-size:16px;font-family:ui-monospace,Menlo,monospace}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pitem{display:grid;grid-template-columns:2.2ch 1fr 58px repeat(3,40px);gap:6px;align-items:center}
 .pitem input[type=number]{padding:0 6px;text-align:center}
