@@ -130,6 +130,20 @@ details.fr[open] summary::after{content:"Close"}
 .banner{background:var(--sunk);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 .msg{font-size:14px;color:var(--ok)}
 .msg.bad{color:var(--short)}
+
+.grab{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;gap:10px;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.grab[hidden]{display:none}
+.g-main{flex:1;width:100%;border:1px solid var(--line);border-radius:18px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center}
+.g-count{font-family:var(--display);font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.g-name{font-family:var(--display);font-size:42px;font-weight:700;line-height:1.05;text-wrap:balance;overflow-wrap:anywhere}
+.g-qty{font-family:var(--display);font-size:128px;font-weight:700;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.g-from{color:var(--muted);font-size:16px}
+.g-hint{margin-top:10px;color:var(--muted);font-size:14px}
+.g-bar{display:flex;gap:8px}
+.g-bar button{flex:1;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:15px;font-weight:600;color:var(--muted)}
+.g-bar button:disabled{opacity:.35}
 </style>
 
 <header class="top"><div class="top-in">
@@ -138,6 +152,7 @@ details.fr[open] summary::after{content:"Close"}
 </div></header>
 <main id="main"></main>
 <nav class="tabs" aria-label="Sections"><div class="tabs-in" id="tabs"></div></nav>
+<div class="grab" id="grab" role="dialog" aria-label="Grab mode" hidden></div>
 
 <script>
 const KEY = 'fridge-restock-v2';
@@ -170,6 +185,7 @@ let S;
 try { S = JSON.parse(localStorage.getItem(KEY)); } catch {}
 if (!S || !Array.isArray(S.fridges)) S = sample();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+navigator.storage?.persist?.().catch(() => {}); // ask iOS not to clear this app's data when space runs low
 const ui = { armed: null, open: null, msg: '', bad: false };
 
 const prod = id => S.products.find(p => p.id === id);
@@ -287,6 +303,7 @@ function renderPick() {
     <div class="chips wrap" role="group" aria-label="Fridges to grab for">${chips}</div>
     <div class="summary"><span class="big">${total}</span><span>bottles to grab for ${forWhat}, ${items.length} product${items.length === 1 ? '' : 's'}</span></div>
     ${items.length ? `<p class="hint">In stockroom order. Tap an item once it's in your crate, or tap its number if you could only take some. ${done} of ${items.length} done.</p>` : ''}
+    ${items.some(i => !isDone(i)) ? `<button class="btn primary" data-act="gstart">Grab mode: one at a time, read aloud</button>` : ''}
     ${list}
     ${outList}
     <div class="actions">${armBtn('newnight', 'Start a new night')}</div>
@@ -352,13 +369,75 @@ function render() {
   document.getElementById('tally').innerHTML = `<b>${total}</b> to grab`;
   document.getElementById('tabs').innerHTML = [['count', 'Count'], ['pick', 'Pick list'], ['setup', 'Setup']].map(([t, l]) =>
     `<button data-act="tab" data-tab="${t}"${S.tab === t ? ' aria-current="page"' : ''}>${l}${t === 'pick' && left ? `<span class="badge">${left}</span>` : ''}</button>`).join('');
+  renderGrab();
 }
+
+// ---- Grab mode: one item at a time, big on screen and spoken aloud ----
+const grabItem = () => { const pid = ui.grab?.queue[ui.grab.i]; return pid && pickList().find(i => i.pid === pid); };
+const settle = () => { while (ui.grab.i < ui.grab.queue.length && !grabItem()) ui.grab.i++; }; // skip items that left the list
+function speak(text) {
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = 0.95;
+    const v = speechSynthesis.getVoices().find(v => v.lang === 'en-GB'); if (v) u.voice = v; speechSynthesis.speak(u); } catch {}
+}
+const setMeta = title => { try { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: 'Fridge Restock' }); } catch {} };
+function sayCurrent() {
+  const it = grabItem();
+  if (!it) { speak('All done. Nothing left to grab.'); setMeta('All done'); return; }
+  const got = grabbed(it), left = it.qty - got, name = prod(it.pid).name;
+  speak(`${name}. ${left}${got ? ' more' : ''}.`); setMeta(`${name} × ${left}`);
+}
+function renderGrab() {
+  const el = document.getElementById('grab'); el.hidden = !ui.grab;
+  if (!ui.grab) { el.innerHTML = ''; return; }
+  const g = ui.grab, it = grabItem();
+  let body = `<div class="g-name">All done</div><div class="g-hint">Tap to go back to the list</div>`;
+  if (it) { const got = grabbed(it);
+    body = `<div class="g-count">Item ${g.i + 1} of ${g.queue.length}</div>
+      <div class="g-name">${esc(prod(it.pid).name)}</div><div class="g-qty">${it.qty - got}</div>
+      <div class="g-from">${got ? `${got} already grabbed · ` : ''}${[...it.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}</div>
+      <div class="g-hint">Tap anywhere when it's in your crate</div>`; }
+  el.innerHTML = `<button class="g-main" data-act="${it ? 'gnext' : 'gstop'}">${body}</button>
+    <div class="g-bar"><button data-act="gback"${g.i ? '' : ' disabled'}>Back</button><button data-act="grepeat">Repeat</button>
+      <button data-act="gskip"${it ? '' : ' disabled'}>Skip</button><button data-act="gstop">Stop</button></div>`;
+}
+
+// AirPods presses arrive as media keys, but only while the page is playing audio, so loop one second of silence.
+// ponytail: iOS support for this in home-screen apps varies; tapping the screen always works.
+let audio, lock;
+function silentUrl() {
+  const n = 8000, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+  new Uint8Array(b, 44).fill(128);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+}
+const keepAwake = () => navigator.wakeLock?.request('screen').then(l => { lock = l; }).catch(() => {});
+const MEDIA = [['pause', 'gnext'], ['play', 'gnext'], ['nexttrack', 'gnext'], ['previoustrack', 'gback']];
+function mediaOn() {
+  try { audio ??= Object.assign(new Audio(silentUrl()), { loop: true }); audio.play().catch(() => {}); } catch {}
+  for (const [a, f] of MEDIA) try { navigator.mediaSession.setActionHandler(a, () => { run(f); audio?.play().catch(() => {}); }); } catch {}
+  keepAwake();
+}
+function mediaOff() {
+  try { audio?.pause(); speechSynthesis.cancel(); } catch {}
+  lock?.release?.().catch(() => {}); lock = null;
+  for (const [a] of MEDIA) try { navigator.mediaSession.setActionHandler(a, null); } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (ui.grab && document.visibilityState === 'visible') keepAwake(); });
+const run = name => { if (acts[name](document.body) !== false) { save(); render(); } };
 
 const findRow = id => { for (const f of S.fridges) for (const sh of f.shelves) { const r = sh.rows.find(r => r.id === id); if (r) return r; } };
 const edited = () => { S.sample = false; };
 const note = (msg, bad = false) => { ui.msg = msg; ui.bad = bad; };
 
 const acts = {
+  gstart: () => { ui.grab = { queue: pickList().filter(i => !isDone(i)).map(i => i.pid), i: 0 }; mediaOn(); sayCurrent(); },
+  gnext: () => { const it = grabItem(); if (it) { const k = tk(it.pid); S.picked[k] = true; delete S.part?.[k]; }
+    ui.grab.i++; settle(); sayCurrent(); },
+  gback: () => { if (!ui.grab.i) return false; ui.grab.i--; delete S.picked[tk(ui.grab.queue[ui.grab.i])]; sayCurrent(); },
+  gskip: () => { ui.grab.i++; settle(); sayCurrent(); },
+  grepeat: () => { sayCurrent(); return false; },
+  gstop: () => { ui.grab = null; mediaOff(); },
   tab: b => { S.tab = b.dataset.tab; ui.msg = ''; scrollTo(0, 0); },
   fridge: b => { S.fridge = +b.dataset.i; scrollTo(0, 0); },
   // Spread the needed total over the card's rows, filling the first row before the next
