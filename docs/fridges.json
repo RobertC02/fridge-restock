@@ -1,0 +1,50 @@
+{
+  "updated": "9 Nov 2026 (example fridges)",
+  "products": [
+    { "id": "peroni", "name": "Peroni" },
+    { "id": "corona", "name": "Corona" },
+    { "id": "heineken-00", "name": "Heineken 0.0" },
+    { "id": "kopparberg-sl", "name": "Kopparberg Strawberry & Lime" },
+    { "id": "old-mout-bc", "name": "Old Mout Berries & Cherries" },
+    { "id": "becks-blue", "name": "Becks Blue" },
+    { "id": "coke", "name": "Coke" },
+    { "id": "diet-coke", "name": "Diet Coke" },
+    { "id": "j2o-op", "name": "J2O Orange & Passion" },
+    { "id": "ft-tonic", "name": "Fever-Tree Tonic" },
+    { "id": "ft-light-tonic", "name": "Fever-Tree Light Tonic" },
+    { "id": "fentimans-gb", "name": "Fentimans Ginger Beer" }
+  ],
+  "fridges": [
+    { "id": "back-bar-1", "name": "Back bar 1", "shelves": [
+      { "name": "Top", "rows": [
+        { "id": "bb1-top-1", "product": "peroni", "cap": 8 },
+        { "id": "bb1-top-2", "product": "peroni", "cap": 8 },
+        { "id": "bb1-top-3", "product": "corona", "cap": 6 } ] },
+      { "name": "Middle", "rows": [
+        { "id": "bb1-mid-1", "product": "kopparberg-sl", "cap": 6 },
+        { "id": "bb1-mid-2", "product": "old-mout-bc", "cap": 6 } ] },
+      { "name": "Bottom", "rows": [
+        { "id": "bb1-bot-1", "product": "heineken-00", "cap": 8 },
+        { "id": "bb1-bot-2", "product": "becks-blue", "cap": 8 } ] } ] },
+    { "id": "back-bar-2", "name": "Back bar 2", "shelves": [
+      { "name": "Top", "rows": [
+        { "id": "bb2-top-1", "product": "coke", "cap": 10 },
+        { "id": "bb2-top-2", "product": "diet-coke", "cap": 10 } ] },
+      { "name": "Bottom", "rows": [
+        { "id": "bb2-bot-1", "product": "j2o-op", "cap": 8 } ] } ] },
+    { "id": "mixers", "name": "Mixers", "shelves": [
+      { "name": "Top", "rows": [
+        { "id": "mix-top-1", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-2", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-3", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-4", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-5", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-6", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-7", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-8", "product": "ft-tonic", "cap": 10 },
+        { "id": "mix-top-9", "product": "ft-tonic", "cap": 10 } ] },
+      { "name": "Bottom", "rows": [
+        { "id": "mix-bot-1", "product": "ft-light-tonic", "cap": 12 },
+        { "id": "mix-bot-2", "product": "fentimans-gb", "cap": 8 } ] } ] }
+  ]
+}
