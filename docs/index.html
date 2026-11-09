@@ -421,10 +421,13 @@ const voiceScore = v => (/premium/i.test(v.name) ? 4 : /enhanced/i.test(v.name) 
 const pickVoice = () => { const vs = englishVoices(); return vs.find(v => v.voiceURI === S.voice) || [...vs].sort((a, b) => voiceScore(b) - voiceScore(a))[0]; };
 try { speechSynthesis.addEventListener('voiceschanged', () => { if (S.tab === 'setup') render(); }); } catch {}
 const setMeta = title => { try { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: 'Fridge Restock' }); } catch {} };
+// Read names the way you'd say them: "Bt Becks 4%" is just "Becks", "Cart Orange Juice" is "Carton Orange Juice"
+const spoken = n => n.replace(/^Bt\s+/i, '').replace(/^Cart\s+/i, 'Carton ').replace(/^BIB\s+/i, 'Bag in box ')
+  .replace(/\s*\d+(\.\d+)?%/g, '').replace(/\s*\d+\s*ml\b/gi, '').replace(/^500\s+/, '').replace(/\s*\/\s*/g, ' or ').trim();
 function sayCurrent() {
   const it = grabItem();
   if (!it) { speak('All done. Nothing left to grab.'); setMeta('All done'); return; }
-  const got = grabbed(it), left = it.qty - got, name = prod(it.pid).name, cs = cases(it.pid, left);
+  const got = grabbed(it), left = it.qty - got, name = spoken(prod(it.pid).name), cs = cases(it.pid, left);
   speak(`${name}. ${left}${got ? ' more' : ''}.${cs ? ` That's ${cs.replace('+', 'and')}.` : ''}`); setMeta(`${name} × ${left}`);
 }
 function renderGrab() {
@@ -536,6 +539,10 @@ const acts = {
       undoStack.push(dataKey());
       // Keep case sizes typed in on this phone unless the online plans set their own
       const products = d.products.map(p => { const c = p.case ?? S.products.find(o => o.id === p.id)?.case; return c ? { ...p, case: c } : p; });
+      // Keep the stockroom order arranged on this phone; new products go at the end
+      const pos = new Map(S.products.map((p, i) => [p.id, i]));
+      const at = id => pos.has(id) ? pos.get(id) : 1e4 + d.products.findIndex(p => p.id === id);
+      products.sort((a, b) => at(a.id) - at(b.id));
       S = { ...S, sample: false, products, fridges: d.fridges, plans: d.updated || '',
             counts: keep(S.counts, rowIds), picked: {}, part: {}, oos: keep(S.oos, pids) };
       note(`Fridges updated${d.updated ? ` to the plans from ${d.updated}` : ''}.`);
