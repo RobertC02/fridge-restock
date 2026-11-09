@@ -544,5 +544,10 @@ main.addEventListener('toggle', e => { if (e.target.matches('details.fr')) { if 
 
 render();
 // Offline support when hosted on its own site; harmlessly fails inside a preview frame.
-if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // A new version took over just after opening: reload once so it shows now rather than next time.
+  const opened = Date.now();
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (Date.now() - opened < 10000 && !ui.grab) location.reload(); });
+}
 </script>
