@@ -1,5 +1,5 @@
 {
- "updated": "9 Nov 2026 (Fridges 1, 2, 4)",
+ "updated": "9 Nov 2026 (all 4 fridges)",
  "products": [
   {
    "id": "bt-asahi-5pc-660ml",
@@ -146,6 +146,38 @@
    "name": "BIB Craft Cider"
   },
   {
+   "id": "bt-becks-blue-af",
+   "name": "Bt Becks Blue AF"
+  },
+  {
+   "id": "bt-stella-af",
+   "name": "Bt Stella AF"
+  },
+  {
+   "id": "bt-corona-cero",
+   "name": "Bt Corona Cero"
+  },
+  {
+   "id": "bt-brewdog-punk-af",
+   "name": "Bt BrewDog Punk AF"
+  },
+  {
+   "id": "bt-heineken-0-0",
+   "name": "Bt Heineken 0.0"
+  },
+  {
+   "id": "bt-erdinger-alkoholfrei",
+   "name": "Bt Erdinger Alkoholfrei"
+  },
+  {
+   "id": "can-guinness-zero",
+   "name": "Can Guinness Zero"
+  },
+  {
+   "id": "bt-kopp-af-strawberry-and-lime",
+   "name": "Bt Kopp AF Strawberry & Lime"
+  },
+  {
    "id": "blue-buzz-ballz",
    "name": "Blue Buzz Ballz"
   },
@@ -186,6 +218,10 @@
    "name": "Bt Smirnoff Ice"
   },
   {
+   "id": "bt-hooch-lemon-brew",
+   "name": "Bt Hooch Lemon Brew"
+  },
+  {
    "id": "bt-britvic-diet-tonic",
    "name": "Bt Britvic Diet Tonic"
   },
@@ -220,6 +256,26 @@
   {
    "id": "bt-500-sparkling-water",
    "name": "Bt 500 Sparkling Water"
+  },
+  {
+   "id": "can-san-pell-blood-orange",
+   "name": "Can San Pell Blood Orange"
+  },
+  {
+   "id": "can-raspberry-lemonade",
+   "name": "Can Raspberry Lemonade"
+  },
+  {
+   "id": "pip-smoothie",
+   "name": "Pip Smoothie"
+  },
+  {
+   "id": "pip-fruity-water",
+   "name": "Pip Fruity Water"
+  },
+  {
+   "id": "cawstons-apple-and-pear-carton",
+   "name": "Cawston's Apple & Pear Carton"
   },
   {
    "id": "can-monster-energy-500ml",
@@ -1218,6 +1274,457 @@
       },
       {
        "id": "fridge-2-s5-16",
+       "product": "can-monster-energy-500ml",
+       "cap": 8
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "fridge-3",
+   "name": "Fridge 3",
+   "shelves": [
+    {
+     "name": "Shelf 1",
+     "rows": [
+      {
+       "id": "fridge-3-s1-1",
+       "product": "broadwoods-folly",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-2",
+       "product": "teresa-rizzi-prosecco",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-3",
+       "product": "teresa-rizzi-prosecco",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-4",
+       "product": "teresa-rizzi-prosecco",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-5",
+       "product": "villa-maria-sauv",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-6",
+       "product": "villa-maria-sauv",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-7",
+       "product": "cune-white-rioja",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s1-8",
+       "product": "cune-white-rioja",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s1-9",
+       "product": "the-pale",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s1-10",
+       "product": "villa-maria-blush",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-11",
+       "product": "villa-maria-blush",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s1-12",
+       "product": "gallo-family-white-zinfandel",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s1-13",
+       "product": "bolla-pinot-grigio",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s1-14",
+       "product": "bolla-pinot-grigio",
+       "cap": 7
+      }
+     ]
+    },
+    {
+     "name": "Shelf 2",
+     "rows": [
+      {
+       "id": "fridge-3-s2-1",
+       "product": "mini-teresa-rizzi-prosecco",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-2",
+       "product": "mini-teresa-rizzi-prosecco",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-3",
+       "product": "mini-teresa-rizzi-prosecco",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-4",
+       "product": "mini-teresa-rizzi-prosecco",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-5",
+       "product": "mini-teresa-rizzi-prosecco",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-6",
+       "product": "mini-teresa-rizzi-sparkling-rose",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-7",
+       "product": "mini-teresa-rizzi-sparkling-rose",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-8",
+       "product": "mini-teresa-rizzi-sparkling-rose",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-9",
+       "product": "mini-teresa-rizzi-sparkling-rose",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-10",
+       "product": "mini-teresa-rizzi-sparkling-rose",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s2-11",
+       "product": "blue-buzz-ballz",
+       "cap": 14
+      },
+      {
+       "id": "fridge-3-s2-12",
+       "product": "tequila-rita-buzz-ballz",
+       "cap": 14
+      },
+      {
+       "id": "fridge-3-s2-13",
+       "product": "strawberry-rita-buzz-ballz",
+       "cap": 14
+      },
+      {
+       "id": "fridge-3-s2-14",
+       "product": "bt-wkd-blue-3-4pc",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s2-15",
+       "product": "bt-wkd-blue-3-4pc",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s2-16",
+       "product": "bt-smirnoff-ice",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s2-17",
+       "product": "bt-smirnoff-ice",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s2-18",
+       "product": "bt-hooch-lemon-brew",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s2-19",
+       "product": "bt-hooch-lemon-brew",
+       "cap": 8
+      }
+     ]
+    },
+    {
+     "name": "Shelf 3",
+     "rows": [
+      {
+       "id": "fridge-3-s3-1",
+       "product": "can-san-pell-blood-orange",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s3-2",
+       "product": "can-san-pell-blood-orange",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s3-3",
+       "product": "can-raspberry-lemonade",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s3-4",
+       "product": "can-raspberry-lemonade",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s3-5",
+       "product": "pip-smoothie",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-6",
+       "product": "pip-fruity-water",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-7",
+       "product": "cawstons-apple-and-pear-carton",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-8",
+       "product": "bib-craft-cider",
+       "cap": 1
+      },
+      {
+       "id": "fridge-3-s3-9",
+       "product": "britvic-elderflower-tonic",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-10",
+       "product": "bt-britvic-bitter-lemon",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-11",
+       "product": "bt-britvic-ginger-ale",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-12",
+       "product": "bt-britvic-diet-tonic",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-13",
+       "product": "bt-britvic-diet-tonic",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-14",
+       "product": "bt-britvic-diet-tonic",
+       "cap": 10
+      },
+      {
+       "id": "fridge-3-s3-15",
+       "product": "bt-500-still-water",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s3-16",
+       "product": "bt-500-still-water",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s3-17",
+       "product": "bt-500-sparkling-water",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s3-18",
+       "product": "bt-500-sparkling-water",
+       "cap": 8
+      }
+     ]
+    },
+    {
+     "name": "Shelf 4",
+     "rows": [
+      {
+       "id": "fridge-3-s4-1",
+       "product": "bt-becks-blue-af",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s4-2",
+       "product": "bt-stella-af",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s4-3",
+       "product": "bt-corona-cero",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s4-4",
+       "product": "bt-brewdog-punk-af",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s4-5",
+       "product": "bt-heineken-0-0",
+       "cap": 9
+      },
+      {
+       "id": "fridge-3-s4-6",
+       "product": "bt-kopp-af-strawberry-and-lime",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-7",
+       "product": "bt-erdinger-alkoholfrei",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-8",
+       "product": "can-guinness-zero",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-9",
+       "product": "can-guinness-zero",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-10",
+       "product": "bt-kopp-pear",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-11",
+       "product": "bt-kopp-mango",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-12",
+       "product": "bt-kopp-mixed-fruits",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-13",
+       "product": "bt-kopp-mixed-fruits",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-14",
+       "product": "bt-kopp-mixed-fruits",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-15",
+       "product": "bt-kopp-strawberry-and-lime",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-16",
+       "product": "bt-kopp-strawberry-and-lime",
+       "cap": 7
+      },
+      {
+       "id": "fridge-3-s4-17",
+       "product": "bt-kopp-strawberry-and-lime",
+       "cap": 7
+      }
+     ]
+    },
+    {
+     "name": "Shelf 5",
+     "rows": [
+      {
+       "id": "fridge-3-s5-1",
+       "product": "cart-orange-juice",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s5-2",
+       "product": "cart-orange-juice",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s5-3",
+       "product": "cart-cranberry-juice",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s5-4",
+       "product": "cart-cranberry-juice",
+       "cap": 6
+      },
+      {
+       "id": "fridge-3-s5-5",
+       "product": "cart-apple-juice",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-6",
+       "product": "cart-pineapple-juice",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-7",
+       "product": "cart-funkin-passion",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-8",
+       "product": "can-monster-ultra-rosa",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-9",
+       "product": "can-monster-pipeline-punch-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-10",
+       "product": "can-monster-pipeline-punch-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-11",
+       "product": "can-monster-mango-loco-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-12",
+       "product": "can-monster-mango-loco-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-13",
+       "product": "can-monster-ultra-zero-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-14",
+       "product": "can-monster-ultra-zero-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-15",
+       "product": "can-monster-energy-500ml",
+       "cap": 8
+      },
+      {
+       "id": "fridge-3-s5-16",
        "product": "can-monster-energy-500ml",
        "cap": 8
       }
