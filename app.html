@@ -1,0 +1,385 @@
+<title>Fridge Restock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-column phone tool. Sticky header, scrolling work area, fixed bottom tabs within thumb reach. */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --sunk:#e2e7eb; --line:#d0d8de;
+  --fg:#16202a; --muted:#566573;
+  --accent:#9c5e0d; --accent-fg:#ffffff;
+  --short:#bf3d29; --short-bg:#fbebe7; --ok:#2b7549;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161b; --surface:#1a2129; --sunk:#252e37; --line:#313c46;
+  --fg:#e6ebef; --muted:#97a5b1;
+  --accent:#e3a84c; --accent-fg:#1b1307;
+  --short:#f2846f; --short-bg:#36201b; --ok:#66c58e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161b; --surface:#1a2129; --sunk:#252e37; --line:#313c46;
+  --fg:#e6ebef; --muted:#97a5b1;
+  --accent:#e3a84c; --accent-fg:#1b1307;
+  --short:#f2846f; --short-bg:#36201b; --ok:#66c58e; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h2{font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}
+p{margin:0}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  padding-block:12px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{max-width:640px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--display);font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.02em}
+.tally{border:0;border-radius:999px;background:var(--sunk);padding:4px 12px;font-family:var(--display);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.tally b{color:var(--accent)}
+
+main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
+  padding-block:14px calc(96px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tabs button{height:48px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-family:var(--display);font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tabs button[aria-current="page"]{background:var(--sunk);color:var(--fg)}
+.badge{display:inline-block;min-width:22px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:15px;line-height:22px;font-variant-numeric:tabular-nums}
+
+.label{font-family:var(--display);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.hint{color:var(--muted);font-size:14px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:20px;text-align:center;color:var(--muted)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip .n{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--short);color:var(--surface);font-family:var(--display);font-size:15px;line-height:20px;text-align:center}
+
+.shelf{display:flex;flex-direction:column;gap:8px}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.row.is-short{background:var(--short-bg);border-color:color-mix(in srgb,var(--short) 45%,var(--line))}
+.row-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.row-head > div{min-width:0}
+.pname{font-weight:600;font-size:17px;overflow-wrap:anywhere}
+.cap{color:var(--muted);font-size:14px}
+.need{font-family:var(--display);font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;color:var(--short)}
+.need.ok{color:var(--ok)}
+.nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.nums button,.stepper button{height:46px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font-family:var(--display);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.nums button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{width:60px}
+.stepper output{min-width:3ch;text-align:center;font-family:var(--display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+
+.btn{min-height:48px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.btn.small{min-height:40px;padding:0 12px;font-size:15px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.danger{color:var(--short)}
+.btn.armed{background:var(--short);border-color:var(--short);color:var(--surface)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.actions .btn{flex:1 1 auto}
+
+.summary{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.big{font-family:var(--display);font-size:46px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pick{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pick > div{min-width:0}
+.pick-li{display:grid;grid-template-columns:1fr 74px;gap:6px}
+.out-btn{padding:0 6px;font-size:13px;line-height:1.15;color:var(--muted)}
+.row.is-out{background:var(--sunk);border-style:dashed}
+.row.is-out .pname{color:var(--muted);text-decoration:line-through}
+.box{width:28px;height:28px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;color:transparent}
+.pick .qty{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.from{color:var(--muted);font-size:13px}
+.pick[aria-pressed="true"]{opacity:.55}
+.pick[aria-pressed="true"] .pname{text-decoration:line-through}
+.pick[aria-pressed="true"] .box{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;height:44px;padding:0 10px;min-width:0;width:100%}
+textarea{height:auto;min-height:88px;padding:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pitem{display:grid;grid-template-columns:2.2ch 1fr repeat(3,40px);gap:6px;align-items:center}
+.idx{font-family:var(--display);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.icon{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font-size:17px;padding:0}
+.icon:disabled{opacity:.35;cursor:default}
+.addrow{display:flex;gap:8px}
+details.fr{border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+details.fr summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600}
+details.fr summary::-webkit-details-marker{display:none}
+details.fr summary::after{content:"Edit";color:var(--accent);font-size:14px}
+details.fr[open] summary::after{content:"Close"}
+.fr-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.sh{border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.line{display:flex;gap:6px;align-items:center}
+.line .btn{white-space:nowrap;flex:none}
+.rrow{display:grid;grid-template-columns:1fr 68px 40px;gap:6px}
+.banner{background:var(--sunk);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.msg{font-size:14px;color:var(--ok)}
+.msg.bad{color:var(--short)}
+</style>
+
+<header class="top"><div class="top-in">
+  <div class="brand">Fridge Restock</div>
+  <button class="tally" id="tally" data-act="tab" data-tab="pick"></button>
+</div></header>
+<main id="main"></main>
+<nav class="tabs" aria-label="Sections"><div class="tabs-in" id="tabs"></div></nav>
+
+<script>
+const KEY = 'fridge-restock-v2';
+const uid = () => Math.random().toString(36).slice(2, 9);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function sample() {
+  const P = ['Peroni','Corona','Heineken 0.0','Kopparberg Strawberry & Lime','Old Mout Berries & Cherries','Becks Blue',
+             'Coke','Diet Coke','J2O Orange & Passion','Fever-Tree Tonic','Fever-Tree Light Tonic','Fentimans Ginger Beer']
+    .map(name => ({ id: uid(), name }));
+  const row = (n, cap) => ({ id: uid(), product: P.find(p => p.name === n).id, cap });
+  const s = { sample: true, products: P, counts: {}, picked: {}, tab: 'count', fridge: 0, fridges: [
+    { id: uid(), name: 'Back bar 1', shelves: [
+      { name: 'Top', rows: [row('Peroni', 8), row('Peroni', 8), row('Corona', 6)] },
+      { name: 'Middle', rows: [row('Kopparberg Strawberry & Lime', 6), row('Old Mout Berries & Cherries', 6)] },
+      { name: 'Bottom', rows: [row('Heineken 0.0', 8), row('Becks Blue', 8)] } ] },
+    { id: uid(), name: 'Back bar 2', shelves: [
+      { name: 'Top', rows: [row('Coke', 10), row('Diet Coke', 10)] },
+      { name: 'Bottom', rows: [row('J2O Orange & Passion', 8)] } ] },
+    { id: uid(), name: 'Mixers', shelves: [
+      { name: 'Top', rows: Array.from({ length: 9 }, () => row('Fever-Tree Tonic', 10)) },
+      { name: 'Bottom', rows: [row('Fever-Tree Light Tonic', 12), row('Fentimans Ginger Beer', 8)] } ] } ] };
+  // A half-done night so the pick list has something in it
+  const r = s.fridges.flatMap(f => f.shelves.flatMap(sh => sh.rows));
+  [[0,2],[1,7],[2,4],[3,5],[7,3],[9,6],...[10,11,12,13,14,15,16,17,18].map(i => [i, 7])].forEach(([i, v]) => s.counts[r[i].id] = v);
+  return s;
+}
+
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch {}
+if (!S || !Array.isArray(S.fridges)) S = sample();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const ui = { armed: null, open: null, msg: '', bad: false };
+
+const prod = id => S.products.find(p => p.id === id);
+const allRows = () => S.fridges.flatMap(f => f.shelves.flatMap(sh => sh.rows.map(r => ({ f, r }))));
+const present = r => Math.min(S.counts[r.id] ?? r.cap, r.cap);
+const need = r => r.cap - present(r);
+const isOos = pid => !!S.oos?.[pid];
+const groups = sh => { const m = new Map(); sh.rows.forEach(r => m.set(r.product, [...(m.get(r.product) || []), r])); return [...m.values()]; };
+const shortRows = f => f.shelves.reduce((n, sh) => n + groups(sh).filter(g => !isOos(g[0].product) && g.some(r => need(r) > 0)).length, 0);
+
+function pickList() {
+  const by = new Map();
+  for (const { f, r } of allRows()) {
+    const n = need(r);
+    if (!n || !prod(r.product) || isOos(r.product)) continue;
+    const it = by.get(r.product) || { pid: r.product, qty: 0, from: new Map() };
+    it.qty += n;
+    it.from.set(f.name, (it.from.get(f.name) || 0) + n);
+    by.set(r.product, it);
+  }
+  const order = id => S.products.findIndex(p => p.id === id);
+  return [...by.values()].sort((a, b) => order(a.pid) - order(b.pid));
+}
+
+// Two-tap confirm (the artifact viewer blocks confirm())
+function armed(key) {
+  if (ui.armed === key) { ui.armed = null; return true; }
+  ui.armed = key; clearTimeout(ui.t);
+  ui.t = setTimeout(() => { ui.armed = null; render(); }, 3000);
+  render(); return false;
+}
+const armBtn = (key, label, cls = 'btn danger') =>
+  `<button class="${cls}${ui.armed === key ? ' armed' : ''}" data-act="${key.split(':')[0]}" data-key="${key}">${ui.armed === key ? 'Tap again to confirm' : label}</button>`;
+
+// One card per product per shelf: several rows of the same product are counted together.
+function card(rows) {
+  const pid = rows[0].product, name = prod(pid)?.name ?? 'Unknown product', ids = rows.map(r => r.id).join(',');
+  const cap = rows.reduce((t, r) => t + r.cap, 0), n = rows.reduce((t, r) => t + need(r), 0);
+  const holds = rows.length === 1 ? `Row holds ${cap}`
+    : rows.every(r => r.cap === rows[0].cap) ? `${rows.length} rows × ${rows[0].cap} · holds ${cap}` : `${rows.length} rows · holds ${cap}`;
+  if (isOos(pid)) return `<div class="row is-out"><div class="row-head">
+      <div><div class="pname">${esc(name)}</div><div class="cap">Out of stock, skip ${rows.length > 1 ? 'these rows' : 'this row'}</div></div>
+      <button class="btn small" data-act="instock" data-pid="${pid}">Back in stock</button></div></div>`;
+  const b = (v, label, attrs = '') => `<button data-act="need" data-rows="${ids}" data-n="${v}"${attrs}>${label}</button>`;
+  const ctl = cap <= 12
+    ? `<div class="nums" role="group" aria-label="Bottles needed">${Array.from({ length: cap + 1 }, (_, k) => b(k, k, ` aria-pressed="${k === n}"`)).join('')}</div>`
+    : `<div class="stepper">${b(n - 1, '−', ' aria-label="Need one fewer"')}<output>${n}</output>${b(n + 1, '+', ' aria-label="Need one more"')}
+        ${rows.length > 1 ? b(n + rows.length, `+${rows.length}`, ` aria-label="Need one more from each of the ${rows.length} rows"`) : ''}${b(0, 'None')}</div>`;
+  return `<div class="row${n ? ' is-short' : ''}"><div class="row-head">
+      <div><div class="pname">${esc(name)}</div><div class="cap">${holds}</div></div>
+      <span class="need${n ? '' : ' ok'}">${n ? `Need ${n}` : 'Full'}</span></div>${ctl}</div>`;
+}
+
+function renderCount() {
+  if (!S.fridges.length) return `<div class="empty">No fridges yet. Add them in Setup.</div>`;
+  S.fridge = Math.min(S.fridge, S.fridges.length - 1);
+  const f = S.fridges[S.fridge], last = S.fridge === S.fridges.length - 1;
+  const chips = S.fridges.map((x, i) => { const n = shortRows(x);
+    return `<button class="chip" data-act="fridge" data-i="${i}" aria-pressed="${i === S.fridge}">${esc(x.name)}${n ? `<span class="n">${n}</span>` : ''}</button>`; }).join('');
+  const shelves = f.shelves.map(sh => `<section class="shelf">
+    <div class="label">${esc(sh.name)}</div>
+    ${groups(sh).map(card).join('') || `<div class="hint">No rows on this shelf yet.</div>`}
+  </section>`).join('');
+  return `<div class="chips" role="group" aria-label="Fridges">${chips}</div>
+    <p class="hint">Tap how many bottles each row needs. Every row starts at 0, so skip the full ones.</p>
+    ${shelves || `<div class="empty">This fridge has no shelves yet. Add them in Setup.</div>`}
+    <div class="actions">
+      <button class="btn" data-act="fullfridge">Mark ${esc(f.name)} full</button>
+      ${last ? `<button class="btn primary" data-act="tab" data-tab="pick">See pick list</button>`
+             : `<button class="btn primary" data-act="fridge" data-i="${S.fridge + 1}">Next: ${esc(S.fridges[S.fridge + 1].name)}</button>`}
+    </div>`;
+}
+
+function renderPick() {
+  const items = pickList(), total = items.reduce((t, i) => t + i.qty, 0);
+  const done = items.filter(i => S.picked[i.pid]).length;
+  const list = items.length ? `<ul class="picks">${items.map(i => `<li class="pick-li">
+      <button class="pick" data-act="pick" data-pid="${i.pid}" aria-pressed="${!!S.picked[i.pid]}">
+        <span class="box" aria-hidden="true">✓</span>
+        <div><div class="pname">${esc(prod(i.pid).name)}</div>
+          <div class="from">${[...i.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}</div></div>
+        <span class="qty">${i.qty}</span></button>
+      <button class="btn out-btn" data-act="oos" data-pid="${i.pid}" aria-label="Mark ${esc(prod(i.pid).name)} out of stock">Out of stock</button></li>`).join('')}</ul>`
+    : `<div class="empty">Nothing to grab. Every fridge is full.</div>`;
+  const outs = S.products.filter(p => isOos(p.id));
+  const outList = outs.length ? `<section class="card"><h2>Out of stock</h2>
+      <p class="hint">Left off the list until you mark them back in stock. Starting a new night keeps these.</p>
+      <ul class="plist">${outs.map(p => `<li class="line"><span class="pname" style="flex:1">${esc(p.name)}</span>
+        <button class="btn small" data-act="instock" data-pid="${p.id}">Back in stock</button></li>`).join('')}</ul></section>` : '';
+  return `<div class="summary"><span class="big">${total}</span><span>bottles to grab across ${items.length} product${items.length === 1 ? '' : 's'}</span></div>
+    ${items.length ? `<p class="hint">In stockroom order. Tap an item once it's in your crate. ${done} of ${items.length} done.</p>` : ''}
+    ${list}
+    ${outList}
+    <div class="actions">${armBtn('newnight', 'Start a new night')}</div>
+    <p class="hint">Starting a new night sets every row back to full and clears the ticks.</p>`;
+}
+
+function renderSetup() {
+  const used = pid => allRows().filter(x => x.r.product === pid).length;
+  const opts = sel => S.products.map(p => `<option value="${p.id}"${p.id === sel ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+  const products = S.products.map((p, i) => `<li class="pitem">
+      <span class="idx">${i + 1}</span>
+      <input id="p-${p.id}" value="${esc(p.name)}" data-ch="pname" data-pid="${p.id}" aria-label="Product name">
+      <button class="icon" data-act="pmove" data-pid="${p.id}" data-d="-1" aria-label="Move up"${i ? '' : ' disabled'}>↑</button>
+      <button class="icon" data-act="pmove" data-pid="${p.id}" data-d="1" aria-label="Move down"${i < S.products.length - 1 ? '' : ' disabled'}>↓</button>
+      <button class="icon" data-act="pdel" data-pid="${p.id}" aria-label="Delete ${esc(p.name)}" title="${used(p.id) ? 'Used in fridges' : 'Delete'}">✕</button>
+    </li>`).join('');
+  const fridges = S.fridges.map((f, fi) => `<details class="fr" data-fid="${f.id}"${ui.open === f.id ? ' open' : ''}>
+      <summary><span>${esc(f.name)}</span></summary>
+      <div class="fr-body">
+        <label class="label" for="f-${f.id}">Fridge name</label>
+        <input id="f-${f.id}" value="${esc(f.name)}" data-ch="fname" data-f="${fi}">
+        ${f.shelves.map((sh, si) => `<div class="sh">
+          <div class="line"><input id="s-${f.id}-${si}" value="${esc(sh.name)}" data-ch="sname" data-f="${fi}" data-s="${si}" aria-label="Shelf name">
+            ${armBtn(`sdel:${fi}:${si}`, 'Remove shelf', 'btn small danger')}</div>
+          ${sh.rows.map(r => `<div class="rrow">
+            <select id="rp-${r.id}" data-ch="rprod" data-row="${r.id}" aria-label="Product in row">${opts(r.product)}</select>
+            <input id="rc-${r.id}" type="number" inputmode="numeric" min="1" max="48" value="${r.cap}" data-ch="rcap" data-row="${r.id}" aria-label="Bottles that fit">
+            <button class="icon" data-act="rdel" data-f="${fi}" data-s="${si}" data-row="${r.id}" aria-label="Remove row">✕</button></div>`).join('')}
+          <button class="btn small" data-act="radd" data-f="${fi}" data-s="${si}">Add row</button>
+        </div>`).join('')}
+        <div class="actions"><button class="btn small" data-act="sadd" data-f="${fi}">Add shelf</button>
+          ${armBtn(`fdel:${fi}`, 'Delete fridge', 'btn small danger')}</div>
+      </div></details>`).join('');
+  return `${S.sample ? `<div class="banner"><p>These are <b>example fridges</b> so you can try the app. Edit them, or clear them and enter your own.</p>
+      <div class="actions">${armBtn('clearsample', 'Clear the examples')}</div></div>` : ''}
+    <section class="card"><h2>Stockroom order</h2>
+      <p class="hint">List products in the order you walk past them in the stockroom. The pick list follows this order.</p>
+      <ul class="plist">${products}</ul>
+      <div class="addrow"><input id="newp" placeholder="New product, e.g. Guinness 0.0" aria-label="New product name">
+        <button class="btn" data-act="padd">Add</button></div>
+    </section>
+    <section class="card"><h2>Fridges</h2>
+      <p class="hint">Each row is one product and the number of bottles that fit in it. The same product can fill several rows; the pick list adds them together. Add row copies the row above it.</p>
+      ${fridges || '<p class="hint">No fridges yet.</p>'}
+      <button class="btn" data-act="fadd">Add fridge</button>
+    </section>
+    <section class="card"><h2>Backup</h2>
+      <p class="hint">Copy a backup and paste it into Notes. To restore it, paste it below.</p>
+      <div class="actions"><button class="btn" data-act="copy">Copy backup</button></div>
+      <textarea id="restore" placeholder="Paste a backup here" aria-label="Backup text"></textarea>
+      ${armBtn('restore', 'Restore from backup', 'btn')}
+      ${ui.msg ? `<p class="msg${ui.bad ? ' bad' : ''}" role="status">${esc(ui.msg)}</p>` : ''}
+    </section>`;
+}
+
+const main = document.getElementById('main');
+function render() {
+  main.innerHTML = S.tab === 'pick' ? renderPick() : S.tab === 'setup' ? renderSetup() : renderCount();
+  const items = pickList(), total = items.reduce((t, i) => t + i.qty, 0);
+  const left = items.filter(i => !S.picked[i.pid]).length;
+  document.getElementById('tally').innerHTML = `<b>${total}</b> to grab`;
+  document.getElementById('tabs').innerHTML = [['count', 'Count'], ['pick', 'Pick list'], ['setup', 'Setup']].map(([t, l]) =>
+    `<button data-act="tab" data-tab="${t}"${S.tab === t ? ' aria-current="page"' : ''}>${l}${t === 'pick' && left ? `<span class="badge">${left}</span>` : ''}</button>`).join('');
+}
+
+const findRow = id => { for (const f of S.fridges) for (const sh of f.shelves) { const r = sh.rows.find(r => r.id === id); if (r) return r; } };
+const edited = () => { S.sample = false; };
+const note = (msg, bad = false) => { ui.msg = msg; ui.bad = bad; };
+
+const acts = {
+  tab: b => { S.tab = b.dataset.tab; ui.msg = ''; scrollTo(0, 0); },
+  fridge: b => { S.fridge = +b.dataset.i; scrollTo(0, 0); },
+  // Spread the needed total over the card's rows, filling the first row before the next
+  need: b => { let left = Math.max(0, +b.dataset.n);
+    for (const id of b.dataset.rows.split(',')) { const r = findRow(id), k = Math.min(r.cap, left); left -= k;
+      if (k) S.counts[id] = r.cap - k; else delete S.counts[id]; } },
+  fullfridge: () => S.fridges[S.fridge].shelves.forEach(sh => sh.rows.forEach(r => delete S.counts[r.id])),
+  pick: b => { S.picked[b.dataset.pid] = !S.picked[b.dataset.pid]; },
+  oos: b => { (S.oos ??= {})[b.dataset.pid] = true; delete S.picked[b.dataset.pid]; },
+  instock: b => { delete S.oos?.[b.dataset.pid]; },
+  newnight: b => { if (!armed(b.dataset.key)) return false; S.counts = {}; S.picked = {}; S.fridge = 0; S.tab = 'count'; scrollTo(0, 0); },
+  clearsample: b => { if (!armed(b.dataset.key)) return false; S = { products: [], fridges: [], counts: {}, picked: {}, tab: 'setup', fridge: 0 }; },
+  padd: () => { const el = document.getElementById('newp'), name = el.value.trim(); if (!name) return false;
+    S.products.push({ id: uid(), name }); edited(); },
+  pmove: b => { const i = S.products.findIndex(p => p.id === b.dataset.pid), j = i + +b.dataset.d;
+    if (j < 0 || j >= S.products.length) return false; [S.products[i], S.products[j]] = [S.products[j], S.products[i]]; edited(); },
+  pdel: b => { const n = allRows().filter(x => x.r.product === b.dataset.pid).length;
+    if (n) { note(`Remove it from the ${n} fridge row${n === 1 ? '' : 's'} that use it first.`, true); S.tab = 'setup'; return; }
+    S.products = S.products.filter(p => p.id !== b.dataset.pid); edited(); },
+  fadd: () => { const f = { id: uid(), name: `Fridge ${S.fridges.length + 1}`, shelves: [{ name: 'Top', rows: [] }] };
+    S.fridges.push(f); ui.open = f.id; edited(); },
+  fdel: b => { if (!armed(b.dataset.key)) return false; S.fridges.splice(+b.dataset.key.split(':')[1], 1); edited(); },
+  sadd: b => { S.fridges[+b.dataset.f].shelves.push({ name: `Shelf ${S.fridges[+b.dataset.f].shelves.length + 1}`, rows: [] }); edited(); },
+  sdel: b => { if (!armed(b.dataset.key)) return false; const [, fi, si] = b.dataset.key.split(':').map(Number);
+    S.fridges[fi].shelves.splice(si, 1); edited(); },
+  radd: b => { if (!S.products.length) { note('Add a product to the stockroom list first.', true); return; }
+    const rows = S.fridges[+b.dataset.f].shelves[+b.dataset.s].rows, prev = rows[rows.length - 1];
+    rows.push({ id: uid(), product: prev?.product ?? S.products[0].id, cap: prev?.cap ?? 8 }); edited(); },
+  rdel: b => { const sh = S.fridges[+b.dataset.f].shelves[+b.dataset.s]; sh.rows = sh.rows.filter(r => r.id !== b.dataset.row);
+    delete S.counts[b.dataset.row]; edited(); },
+  copy: () => { const text = JSON.stringify({ products: S.products, fridges: S.fridges });
+    navigator.clipboard.writeText(text).then(() => { note('Backup copied. Paste it into Notes to keep it safe.'); render(); })
+      .catch(() => { note('Copying was blocked. The backup is in the box below, selected, so you can copy it yourself.'); render();
+        const t = document.getElementById('restore'); t.value = text; t.select(); });
+    return false; },
+  restore: b => { let d; try { d = JSON.parse(document.getElementById('restore').value); } catch {}
+    if (!d || !Array.isArray(d.products) || !Array.isArray(d.fridges)) { ui.armed = null; note("That doesn't look like a backup from this app.", true); return; }
+    if (!armed(b.dataset.key)) return false;
+    S = { products: d.products, fridges: d.fridges, counts: {}, picked: {}, tab: 'setup', fridge: 0 }; note('Backup restored.'); },
+};
+const changes = {
+  pname: t => { const p = prod(t.dataset.pid), v = t.value.trim(); if (v) p.name = v; },
+  fname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].name = v; },
+  sname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].shelves[+t.dataset.s].name = v; },
+  rprod: t => { findRow(t.dataset.row).product = t.value; },
+  rcap: t => { const r = findRow(t.dataset.row), v = parseInt(t.value, 10); if (v >= 1) r.cap = Math.min(v, 48); },
+};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || !acts[b.dataset.act]) return;
+  if (acts[b.dataset.act](b) === false) return;
+  save(); render();
+});
+main.addEventListener('change', e => { const t = e.target; if (!changes[t.dataset.ch]) return; changes[t.dataset.ch](t); edited(); save(); render(); });
+main.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'newp') { acts.padd(); save(); render(); document.getElementById('newp').focus(); } });
+main.addEventListener('toggle', e => { if (e.target.matches('details.fr')) { if (e.target.open) ui.open = e.target.dataset.fid; else if (ui.open === e.target.dataset.fid) ui.open = null; } }, true);
+
+render();
+// Offline support when hosted on its own site; harmlessly fails inside a preview frame.
+if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
