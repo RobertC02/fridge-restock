@@ -87,14 +87,22 @@ main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
 .summary{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .big{font-family:var(--display);font-size:46px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .picks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.pick{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pick{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .pick > div{min-width:0}
-.pick-li{display:grid;grid-template-columns:1fr 74px;gap:6px}
+.pick-li{display:grid;grid-template-columns:1fr auto 74px;gap:6px}
+.qty-btn{min-width:60px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.qty-btn[aria-expanded="true"]{border-color:var(--accent)}
+.qty-btn .left{font-size:12px;color:var(--muted);margin-top:3px}
+.pick-li.is-done .qty-btn{opacity:.55}
+.grab-edit{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:var(--sunk);border-radius:12px;padding:10px 12px}
+.grab-edit button:not(.btn){width:52px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-family:var(--display);font-size:22px;font-weight:600}
+.grab-edit output{min-width:2ch;text-align:center;font-family:var(--display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.grab-edit .btn{margin-left:auto}
 .out-btn{padding:0 6px;font-size:13px;line-height:1.15;color:var(--muted)}
 .row.is-out{background:var(--sunk);border-style:dashed}
 .row.is-out .pname{color:var(--muted);text-decoration:line-through}
 .box{width:28px;height:28px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;color:transparent}
-.pick .qty{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.qty{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .from{color:var(--muted);font-size:13px}
 .pick[aria-pressed="true"]{opacity:.55}
 .pick[aria-pressed="true"] .pname{text-decoration:line-through}
@@ -241,20 +249,34 @@ function renderCount() {
     </div>`;
 }
 
+// Grabbed so far: a full tick, or a partial number when the crate couldn't take them all
+const grabbed = i => { const k = tk(i.pid); return S.picked[k] ? i.qty : Math.min(S.part?.[k] || 0, i.qty); };
+const isDone = i => grabbed(i) >= i.qty;
+
+function pickItem(i) {
+  const name = esc(prod(i.pid).name), g = grabbed(i), left = i.qty - g, open = ui.edit === i.pid;
+  const step = (n, label, aria) => `<button data-act="got" data-pid="${i.pid}" data-q="${i.qty}" data-n="${n}" aria-label="${aria}">${label}</button>`;
+  return `<li class="pick-li${left ? '' : ' is-done'}">
+    <button class="pick" data-act="pick" data-pid="${i.pid}" aria-pressed="${!left}">
+      <span class="box" aria-hidden="true">✓</span>
+      <div><div class="pname">${name}</div>
+        <div class="from">${[...i.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}${g && left ? ` · <b>${g} of ${i.qty} grabbed</b>` : ''}</div></div></button>
+    <button class="qty-btn" data-act="qty" data-pid="${i.pid}" aria-expanded="${open}" aria-label="${left} of ${i.qty} left to grab. Change how many you have grabbed">
+      <span class="qty">${left || i.qty}</span>${g && left ? '<span class="left">left</span>' : ''}</button>
+    <button class="btn out-btn" data-act="oos" data-pid="${i.pid}" aria-label="Mark ${name} out of stock">Out of stock</button>
+    ${open ? `<div class="grab-edit"><span>Grabbed</span>${step(g - 1, '−', 'One fewer')}<output>${g}</output>${step(g + 1, '+', 'One more')}
+      <span>of ${i.qty}</span><button class="btn small" data-act="qty" data-pid="${i.pid}">Done</button></div>` : ''}
+  </li>`;
+}
+
 function renderPick() {
   const items = pickList(), total = items.reduce((t, i) => t + i.qty, 0);
-  const done = items.filter(i => S.picked[tk(i.pid)]).length, sc = scope();
+  const done = items.filter(isDone).length, sc = scope();
   const chips = `<button class="chip" data-act="scope" data-fid="" aria-pressed="${!sc.length}">All fridges</button>` +
     S.fridges.map(f => { const n = fridgeNeed(f);
       return `<button class="chip" data-act="scope" data-fid="${f.id}" aria-pressed="${sc.includes(f.id)}">${esc(f.name)}${n ? `<span class="n">${n}</span>` : ''}</button>`; }).join('');
   const forWhat = sc.length ? S.fridges.filter(f => sc.includes(f.id)).map(f => esc(f.name)).join(' + ') : 'all fridges';
-  const list = items.length ? `<ul class="picks">${items.map(i => `<li class="pick-li">
-      <button class="pick" data-act="pick" data-pid="${i.pid}" aria-pressed="${!!S.picked[tk(i.pid)]}">
-        <span class="box" aria-hidden="true">✓</span>
-        <div><div class="pname">${esc(prod(i.pid).name)}</div>
-          <div class="from">${[...i.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}</div></div>
-        <span class="qty">${i.qty}</span></button>
-      <button class="btn out-btn" data-act="oos" data-pid="${i.pid}" aria-label="Mark ${esc(prod(i.pid).name)} out of stock">Out of stock</button></li>`).join('')}</ul>`
+  const list = items.length ? `<ul class="picks">${items.map(pickItem).join('')}</ul>`
     : `<div class="empty">Nothing to grab for ${forWhat}.</div>`;
   const outs = S.products.filter(p => isOos(p.id));
   const outList = outs.length ? `<section class="card"><h2>Out of stock</h2>
@@ -264,7 +286,7 @@ function renderPick() {
   return `<div class="label">Grabbing for</div>
     <div class="chips wrap" role="group" aria-label="Fridges to grab for">${chips}</div>
     <div class="summary"><span class="big">${total}</span><span>bottles to grab for ${forWhat}, ${items.length} product${items.length === 1 ? '' : 's'}</span></div>
-    ${items.length ? `<p class="hint">In stockroom order. Tap an item once it's in your crate. ${done} of ${items.length} done.</p>` : ''}
+    ${items.length ? `<p class="hint">In stockroom order. Tap an item once it's in your crate, or tap its number if you could only take some. ${done} of ${items.length} done.</p>` : ''}
     ${list}
     ${outList}
     <div class="actions">${armBtn('newnight', 'Start a new night')}</div>
@@ -326,7 +348,7 @@ const main = document.getElementById('main');
 function render() {
   main.innerHTML = S.tab === 'pick' ? renderPick() : S.tab === 'setup' ? renderSetup() : renderCount();
   const items = pickList(), total = items.reduce((t, i) => t + i.qty, 0);
-  const left = items.filter(i => !S.picked[tk(i.pid)]).length;
+  const left = items.filter(i => !isDone(i)).length;
   document.getElementById('tally').innerHTML = `<b>${total}</b> to grab`;
   document.getElementById('tabs').innerHTML = [['count', 'Count'], ['pick', 'Pick list'], ['setup', 'Setup']].map(([t, l]) =>
     `<button data-act="tab" data-tab="${t}"${S.tab === t ? ' aria-current="page"' : ''}>${l}${t === 'pick' && left ? `<span class="badge">${left}</span>` : ''}</button>`).join('');
@@ -344,12 +366,16 @@ const acts = {
     for (const id of b.dataset.rows.split(',')) { const r = findRow(id), k = Math.min(r.cap, left); left -= k;
       if (k) S.counts[id] = r.cap - k; else delete S.counts[id]; } },
   fullfridge: () => S.fridges[S.fridge].shelves.forEach(sh => sh.rows.forEach(r => delete S.counts[r.id])),
-  pick: b => { const k = tk(b.dataset.pid); S.picked[k] = !S.picked[k]; },
-  oos: b => { (S.oos ??= {})[b.dataset.pid] = true; delete S.picked[tk(b.dataset.pid)]; },
+  pick: b => { const k = tk(b.dataset.pid); S.picked[k] = !S.picked[k]; delete S.part?.[k]; ui.edit = null; },
+  qty: b => { ui.edit = ui.edit === b.dataset.pid ? null : b.dataset.pid; },
+  got: b => { const k = tk(b.dataset.pid), q = +b.dataset.q, n = Math.max(0, Math.min(q, +b.dataset.n));
+    S.part ??= {}; delete S.part[k]; S.picked[k] = n >= q;
+    if (n > 0 && n < q) S.part[k] = n; if (n >= q) ui.edit = null; },
+  oos: b => { (S.oos ??= {})[b.dataset.pid] = true; delete S.picked[tk(b.dataset.pid)]; delete S.part?.[tk(b.dataset.pid)]; },
   scope: b => { const id = b.dataset.fid, s = scope();
     S.scope = !id ? [] : s.includes(id) ? s.filter(x => x !== id) : [...s, id]; },
   instock: b => { delete S.oos?.[b.dataset.pid]; },
-  newnight: b => { if (!armed(b.dataset.key)) return false; S.counts = {}; S.picked = {}; S.fridge = 0; S.tab = 'count'; scrollTo(0, 0); },
+  newnight: b => { if (!armed(b.dataset.key)) return false; S.counts = {}; S.picked = {}; S.part = {}; S.fridge = 0; S.tab = 'count'; scrollTo(0, 0); },
   clearsample: b => { if (!armed(b.dataset.key)) return false; S = { products: [], fridges: [], counts: {}, picked: {}, tab: 'setup', fridge: 0 }; },
   padd: () => { const el = document.getElementById('newp'), name = el.value.trim(); if (!name) return false;
     S.products.push({ id: uid(), name }); edited(); },
@@ -382,7 +408,7 @@ const acts = {
       const pids = new Set(d.products.map(p => p.id));
       const keep = (o, ok) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => ok.has(k)));
       S = { ...S, sample: false, products: d.products, fridges: d.fridges, plans: d.updated || '',
-            counts: keep(S.counts, rowIds), picked: {}, oos: keep(S.oos, pids) };
+            counts: keep(S.counts, rowIds), picked: {}, part: {}, oos: keep(S.oos, pids) };
       note(`Fridges updated${d.updated ? ` to the plans from ${d.updated}` : ''}.`);
     }).catch(() => note("Couldn't get the latest fridges. Check you have signal, then try again.", true))
       .finally(() => { save(); render(); });
