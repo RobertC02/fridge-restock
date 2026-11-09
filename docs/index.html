@@ -46,6 +46,10 @@ p{margin:0}
 .brand{font-family:var(--display);font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.02em}
 .tally{border:0;border-radius:999px;background:var(--sunk);padding:4px 12px;font-family:var(--display);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
 .tally b{color:var(--accent)}
+.top-right{display:flex;align-items:center;gap:8px}
+.undo{border:1px solid var(--line);border-radius:999px;background:transparent;padding:4px 12px;font-family:var(--display);font-size:18px;font-weight:600}
+.undo:disabled{opacity:.3;cursor:default}
+@media (max-width:420px){.brand{font-size:20px}}
 
 main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
   padding-block:14px calc(96px + env(safe-area-inset-bottom,0px));
@@ -158,7 +162,8 @@ details.fr[open] summary::after{content:"Close"}
 
 <header class="top"><div class="top-in">
   <div class="brand">Fridge Restock</div>
-  <button class="tally" id="tally" data-act="tab" data-tab="pick"></button>
+  <div class="top-right"><button class="undo" id="undo" data-act="undo" disabled>Undo</button>
+    <button class="tally" id="tally" data-act="tab" data-tab="pick"></button></div>
 </div></header>
 <main id="main"></main>
 <nav class="tabs" aria-label="Sections"><div class="tabs-in" id="tabs"></div></nav>
@@ -379,6 +384,7 @@ function render() {
   document.getElementById('tally').innerHTML = `<b>${total}</b> to grab`;
   document.getElementById('tabs').innerHTML = [['count', 'Count'], ['pick', 'Pick list'], ['setup', 'Setup']].map(([t, l]) =>
     `<button data-act="tab" data-tab="${t}"${S.tab === t ? ' aria-current="page"' : ''}>${l}${t === 'pick' && left ? `<span class="badge">${left}</span>` : ''}</button>`).join('');
+  document.getElementById('undo').disabled = !undoStack.length;
   renderGrab();
 }
 
@@ -434,13 +440,18 @@ function mediaOff() {
   for (const [a] of MEDIA) try { navigator.mediaSession.setActionHandler(a, null); } catch {}
 }
 document.addEventListener('visibilitychange', () => { if (ui.grab && document.visibilityState === 'visible') keepAwake(); });
-const run = name => { if (acts[name](document.body) !== false) { save(); render(); } };
+const run = name => apply(() => acts[name](document.body));
 
 const findRow = id => { for (const f of S.fridges) for (const sh of f.shelves) { const r = sh.rows.find(r => r.id === id); if (r) return r; } };
 const edited = () => { S.sample = false; };
 const note = (msg, bad = false) => { ui.msg = msg; ui.bad = bad; };
 
+const undoStack = [];
+const dataKey = () => JSON.stringify({ ...S, tab: 0, fridge: 0, scope: 0 }); // screen position isn't undoable
+
 const acts = {
+  undo: () => { if (!undoStack.length) return false;
+    S = { ...JSON.parse(undoStack.pop()), tab: S.tab, fridge: S.fridge, scope: S.scope }; ui.armed = null; ui.edit = null; },
   gstart: () => { ui.grab = { queue: pickList().filter(i => !isDone(i)).map(i => i.pid), i: 0 }; mediaOn(); sayCurrent(); },
   gnext: () => { const it = grabItem(); if (it) { const k = tk(it.pid); S.picked[k] = true; delete S.part?.[k]; }
     ui.grab.i++; settle(); sayCurrent(); },
@@ -496,6 +507,7 @@ const acts = {
       const rowIds = new Set(d.fridges.flatMap(f => f.shelves.flatMap(sh => sh.rows.map(r => r.id))));
       const pids = new Set(d.products.map(p => p.id));
       const keep = (o, ok) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => ok.has(k)));
+      undoStack.push(dataKey());
       S = { ...S, sample: false, products: d.products, fridges: d.fridges, plans: d.updated || '',
             counts: keep(S.counts, rowIds), picked: {}, part: {}, oos: keep(S.oos, pids) };
       note(`Fridges updated${d.updated ? ` to the plans from ${d.updated}` : ''}.`);
@@ -515,13 +527,19 @@ const changes = {
   rcap: t => { const r = findRow(t.dataset.row), v = parseInt(t.value, 10); if (v >= 1) r.cap = Math.min(v, 48); },
 };
 
+// Every change to the data (not just moving between screens) can be undone.
+function apply(fn) {
+  const before = dataKey(); if (fn() === false) return;
+  if (dataKey() !== before) { undoStack.push(before); if (undoStack.length > 50) undoStack.shift(); }
+  save(); render();
+}
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || !acts[b.dataset.act]) return;
-  if (acts[b.dataset.act](b) === false) return;
-  save(); render();
+  if (b.dataset.act === 'undo') { if (acts.undo() !== false) { save(); render(); } return; }
+  apply(() => acts[b.dataset.act](b));
 });
-main.addEventListener('change', e => { const t = e.target; if (!changes[t.dataset.ch]) return; changes[t.dataset.ch](t); edited(); save(); render(); });
-main.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'newp') { acts.padd(); save(); render(); document.getElementById('newp').focus(); } });
+main.addEventListener('change', e => { const t = e.target; if (!changes[t.dataset.ch]) return; apply(() => { changes[t.dataset.ch](t); edited(); }); });
+main.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'newp') { apply(() => acts.padd()); document.getElementById('newp').focus(); } });
 main.addEventListener('toggle', e => { if (e.target.matches('details.fr')) { if (e.target.open) ui.open = e.target.dataset.fid; else if (ui.open === e.target.dataset.fid) ui.open = null; } }, true);
 
 render();
