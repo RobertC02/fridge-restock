@@ -540,11 +540,13 @@ const acts = {
       undoStack.push(dataKey());
       // Keep case sizes typed in on this phone unless the online plans set their own
       const products = d.products.map(p => { const c = p.case ?? S.products.find(o => o.id === p.id)?.case; return c ? { ...p, case: c } : p; });
-      // Keep the stockroom order arranged on this phone; new products go at the end
-      const pos = new Map(S.products.map((p, i) => [p.id, i]));
+      // Keep the stockroom order arranged on this phone (new products go at the end),
+      // unless the plans bring a new stockroom order, which is taken once
+      const newOrder = d.order && d.order !== S.order;
+      const pos = new Map(newOrder ? [] : S.products.map((p, i) => [p.id, i]));
       const at = id => pos.has(id) ? pos.get(id) : 1e4 + d.products.findIndex(p => p.id === id);
       products.sort((a, b) => at(a.id) - at(b.id));
-      S = { ...S, sample: false, products, fridges: d.fridges, plans: d.updated || '',
+      S = { ...S, sample: false, products, fridges: d.fridges, plans: d.updated || '', order: d.order || S.order,
             counts: keep(S.counts, rowIds), picked: {}, part: {}, oos: keep(S.oos, pids) };
       note(`Fridges updated${d.updated ? ` to the plans from ${d.updated}` : ''}.`);
     }).catch(() => note("Couldn't get the latest fridges. Check you have signal, then try again.", true))
