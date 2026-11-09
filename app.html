@@ -117,7 +117,12 @@ input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var
 input[type=range]{border:0;background:none;padding:0;accent-color:var(--accent)}
 textarea{height:auto;min-height:88px;padding:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.pitem{display:grid;grid-template-columns:2.2ch 1fr repeat(3,40px);gap:6px;align-items:center}
+.pitem{display:grid;grid-template-columns:2.2ch 1fr 58px repeat(3,40px);gap:6px;align-items:center}
+.pitem input[type=number]{padding:0 6px;text-align:center}
+.pitem [data-ch=pname]{grid-column:2/-1} /* full name on its own line, case and buttons under it */
+.pitem [data-ch=pcase]{grid-column:3}
+.pitem + .pitem{border-top:1px dashed var(--line);padding-top:8px}
+.g-cases{font-family:var(--display);font-size:26px;font-weight:600;color:var(--fg)}
 .idx{font-family:var(--display);color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .icon{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font-size:17px;padding:0}
 .icon:disabled{opacity:.35;cursor:default}
@@ -271,6 +276,10 @@ function renderCount() {
     </div>`;
 }
 
+// "1 case + 3" when the product has a case size and at least a full case is needed
+const cases = (pid, n) => { const c = prod(pid)?.case; if (!c || n < c) return '';
+  const k = Math.floor(n / c), r = n % c; return `${k} case${k > 1 ? 's' : ''}${r ? ` + ${r}` : ''}`; };
+
 // Grabbed so far: a full tick, or a partial number when the crate couldn't take them all
 const grabbed = i => { const k = tk(i.pid); return S.picked[k] ? i.qty : Math.min(S.part?.[k] || 0, i.qty); };
 const isDone = i => grabbed(i) >= i.qty;
@@ -282,7 +291,7 @@ function pickItem(i) {
     <button class="pick" data-act="pick" data-pid="${i.pid}" aria-pressed="${!left}">
       <span class="box" aria-hidden="true">✓</span>
       <div><div class="pname">${name}</div>
-        <div class="from">${[...i.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}${g && left ? ` · <b>${g} of ${i.qty} grabbed</b>` : ''}</div></div></button>
+        <div class="from">${cases(i.pid, left) ? `<b>${cases(i.pid, left)}</b> · ` : ''}${[...i.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}${g && left ? ` · <b>${g} of ${i.qty} grabbed</b>` : ''}</div></div></button>
     <button class="qty-btn" data-act="qty" data-pid="${i.pid}" aria-expanded="${open}" aria-label="${left} of ${i.qty} left to grab. Change how many you have grabbed">
       <span class="qty">${left || i.qty}</span>${g && left ? '<span class="left">left</span>' : ''}</button>
     <button class="btn out-btn" data-act="oos" data-pid="${i.pid}" aria-label="Mark ${name} out of stock">Out of stock</button>
@@ -322,6 +331,7 @@ function renderSetup() {
   const products = S.products.map((p, i) => `<li class="pitem">
       <span class="idx">${i + 1}</span>
       <input id="p-${p.id}" value="${esc(p.name)}" data-ch="pname" data-pid="${p.id}" aria-label="Product name">
+      <input id="pc-${p.id}" type="number" inputmode="numeric" min="2" max="200" placeholder="Case" value="${p.case || ''}" data-ch="pcase" data-pid="${p.id}" aria-label="Bottles per case for ${esc(p.name)}">
       <button class="icon" data-act="pmove" data-pid="${p.id}" data-d="-1" aria-label="Move up"${i ? '' : ' disabled'}>↑</button>
       <button class="icon" data-act="pmove" data-pid="${p.id}" data-d="1" aria-label="Move down"${i < S.products.length - 1 ? '' : ' disabled'}>↓</button>
       <button class="icon" data-act="pdel" data-pid="${p.id}" aria-label="Delete ${esc(p.name)}" title="${used(p.id) ? 'Used in fridges' : 'Delete'}">✕</button>
@@ -347,6 +357,7 @@ function renderSetup() {
       <div class="actions">${armBtn('clearsample', 'Clear the examples')}</div></div>` : ''}
     <section class="card"><h2>Stockroom order</h2>
       <p class="hint">List products in the order you walk past them in the stockroom. The pick list follows this order.</p>
+      <p class="hint">The Case box is optional. Enter how many bottles come in a case and the pick list shows whole cases, like 1 case + 3. Leave it empty for single bottles.</p>
       <ul class="plist">${products}</ul>
       <div class="addrow"><input id="newp" placeholder="New product, e.g. Guinness 0.0" aria-label="New product name">
         <button class="btn" data-act="padd">Add</button></div>
@@ -403,8 +414,8 @@ const setMeta = title => { try { navigator.mediaSession.metadata = new MediaMeta
 function sayCurrent() {
   const it = grabItem();
   if (!it) { speak('All done. Nothing left to grab.'); setMeta('All done'); return; }
-  const got = grabbed(it), left = it.qty - got, name = prod(it.pid).name;
-  speak(`${name}. ${left}${got ? ' more' : ''}.`); setMeta(`${name} × ${left}`);
+  const got = grabbed(it), left = it.qty - got, name = prod(it.pid).name, cs = cases(it.pid, left);
+  speak(`${name}. ${left}${got ? ' more' : ''}.${cs ? ` That's ${cs.replace('+', 'and')}.` : ''}`); setMeta(`${name} × ${left}`);
 }
 function renderGrab() {
   const el = document.getElementById('grab'); el.hidden = !ui.grab;
@@ -413,7 +424,7 @@ function renderGrab() {
   let body = `<div class="g-name">All done</div><div class="g-hint">Tap to go back to the list</div>`;
   if (it) { const got = grabbed(it);
     body = `<div class="g-count">Item ${g.i + 1} of ${g.queue.length}</div>
-      <div class="g-name">${esc(prod(it.pid).name)}</div><div class="g-qty">${it.qty - got}</div>
+      <div class="g-name">${esc(prod(it.pid).name)}</div><div class="g-qty">${it.qty - got}</div>${cases(it.pid, it.qty - got) ? `<div class="g-cases">${cases(it.pid, it.qty - got)}</div>` : ''}
       <div class="g-from">${got ? `${got} already grabbed · ` : ''}${[...it.from].map(([n, q]) => `${esc(n)} ×${q}`).join(' · ')}</div>
       <div class="g-hint">Tap anywhere when it's in your crate</div>`; }
   el.innerHTML = `<button class="g-main" data-act="${it ? 'gnext' : 'gstop'}">${body}</button>
@@ -513,7 +524,9 @@ const acts = {
       const pids = new Set(d.products.map(p => p.id));
       const keep = (o, ok) => Object.fromEntries(Object.entries(o || {}).filter(([k]) => ok.has(k)));
       undoStack.push(dataKey());
-      S = { ...S, sample: false, products: d.products, fridges: d.fridges, plans: d.updated || '',
+      // Keep case sizes typed in on this phone unless the online plans set their own
+      const products = d.products.map(p => { const c = p.case ?? S.products.find(o => o.id === p.id)?.case; return c ? { ...p, case: c } : p; });
+      S = { ...S, sample: false, products, fridges: d.fridges, plans: d.updated || '',
             counts: keep(S.counts, rowIds), picked: {}, part: {}, oos: keep(S.oos, pids) };
       note(`Fridges updated${d.updated ? ` to the plans from ${d.updated}` : ''}.`);
     }).catch(() => note("Couldn't get the latest fridges. Check you have signal, then try again.", true))
@@ -526,6 +539,7 @@ const acts = {
 };
 const changes = {
   pname: t => { const p = prod(t.dataset.pid), v = t.value.trim(); if (v) p.name = v; },
+  pcase: t => { const p = prod(t.dataset.pid), v = parseInt(t.value, 10); if (v >= 2) p.case = Math.min(v, 200); else delete p.case; },
   fname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].name = v; },
   sname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].shelves[+t.dataset.s].name = v; },
   rprod: t => { findRow(t.dataset.row).product = t.value; },
