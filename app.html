@@ -114,6 +114,7 @@ main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:18px;
 
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
 input,select,textarea{font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;height:44px;padding:0 10px;min-width:0;width:100%}
+input[type=range]{border:0;background:none;padding:0;accent-color:var(--accent)}
 textarea{height:auto;min-height:88px;padding:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .pitem{display:grid;grid-template-columns:2.2ch 1fr repeat(3,40px);gap:6px;align-items:center}
@@ -355,6 +356,14 @@ function renderSetup() {
       ${fridges || '<p class="hint">No fridges yet.</p>'}
       <button class="btn" data-act="fadd">Add fridge</button>
     </section>
+    <section class="card"><h2>Grab mode voice</h2>
+      <p class="hint">For a natural-sounding voice, download one on your iPhone first: Settings → Accessibility → Spoken Content → Voices → English. Pick one marked Enhanced or Premium, then choose it here. Best available picks the nicest one you have.</p>
+      <select id="voice" data-ch="voice" aria-label="Voice"><option value="">Best available${pickVoice() && !S.voice ? ` (${esc(pickVoice().name)})` : ''}</option>
+        ${englishVoices().map(v => `<option value="${esc(v.voiceURI)}"${v.voiceURI === S.voice ? ' selected' : ''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('')}</select>
+      <label class="label" for="rate">Speed: ${(S.rate || 1).toFixed(2)}×</label>
+      <input id="rate" type="range" min="0.7" max="1.3" step="0.05" value="${S.rate || 1}" data-ch="rate">
+      <button class="btn" data-act="vtest">Test voice</button>
+    </section>
     <section class="card"><h2>Fridge plans and backup</h2>
       <p class="hint">Get latest fridges downloads the newest fridge plans saved with the app online. It replaces the fridges on this phone but keeps tonight's counts and out-of-stock marks.${S.plans ? ` Your plans are from ${esc(S.plans)}.` : ''}</p>
       ${armBtn('pull', 'Get latest fridges', 'btn primary')}
@@ -382,9 +391,14 @@ function render() {
 const grabItem = () => { const pid = ui.grab?.queue[ui.grab.i]; return pid && pickList().find(i => i.pid === pid); };
 const settle = () => { while (ui.grab.i < ui.grab.queue.length && !grabItem()) ui.grab.i++; }; // skip items that left the list
 function speak(text) {
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = 0.95;
-    const v = speechSynthesis.getVoices().find(v => v.lang === 'en-GB'); if (v) u.voice = v; speechSynthesis.speak(u); } catch {}
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-GB'; u.rate = S.rate || 1;
+    const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; } speechSynthesis.speak(u); } catch {}
 }
+const englishVoices = () => { try { return speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)); } catch { return []; } };
+// Downloaded iPhone voices are marked Premium or Enhanced in their names and sound far better than the default.
+const voiceScore = v => (/premium/i.test(v.name) ? 4 : /enhanced/i.test(v.name) ? 2 : 0) + (/en[-_]GB/i.test(v.lang) ? 1 : 0);
+const pickVoice = () => { const vs = englishVoices(); return vs.find(v => v.voiceURI === S.voice) || [...vs].sort((a, b) => voiceScore(b) - voiceScore(a))[0]; };
+try { speechSynthesis.addEventListener('voiceschanged', () => { if (S.tab === 'setup') render(); }); } catch {}
 const setMeta = title => { try { navigator.mediaSession.metadata = new MediaMetadata({ title, artist: 'Fridge Restock' }); } catch {} };
 function sayCurrent() {
   const it = grabItem();
@@ -448,6 +462,7 @@ const acts = {
   gback: () => { if (!ui.grab.i) return false; ui.grab.i--; delete S.picked[tk(ui.grab.queue[ui.grab.i])]; sayCurrent(); },
   gskip: () => { ui.grab.i++; settle(); sayCurrent(); },
   grepeat: () => { sayCurrent(); return false; },
+  vtest: () => { speak('Fever-Tree Tonic. 27.'); return false; },
   gstop: () => { ui.grab = null; mediaOff(); },
   tab: b => { S.tab = b.dataset.tab; ui.msg = ''; scrollTo(0, 0); },
   fridge: b => { S.fridge = +b.dataset.i; scrollTo(0, 0); },
@@ -514,6 +529,8 @@ const changes = {
   fname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].name = v; },
   sname: t => { const v = t.value.trim(); if (v) S.fridges[+t.dataset.f].shelves[+t.dataset.s].name = v; },
   rprod: t => { findRow(t.dataset.row).product = t.value; },
+  voice: t => { S.voice = t.value; },
+  rate: t => { S.rate = +t.value; },
   rcap: t => { const r = findRow(t.dataset.row), v = parseInt(t.value, 10); if (v >= 1) r.cap = Math.min(v, 48); },
 };
 
